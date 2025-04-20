@@ -3,7 +3,8 @@
 <suite name="Suite">
 	
 	<listeners>
-		<listener class-name="api.utilities.ExtentReportManager"></listener>
+		<listener class-name="api.utilities.ExtentReportManager">
+		</listener>
 	</listeners>
   <test thread-count="5" name="Test">
     <classes>

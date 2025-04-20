@@ -8,7 +8,6 @@ import static io.restassured.RestAssured.*;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
-
 public class UserEndPoints {
 	
 	public static Response fetchstodetails(stoDetails Payload)
@@ -21,12 +20,11 @@ public class UserEndPoints {
 			    .body(Payload)
 			.when()
 			    .post(Routes.stoDetails);
-		
+		System.out.println("checking");
 		return response;
+		
+		
 	}
 	
 	
-	
-	
-
 }

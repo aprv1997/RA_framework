@@ -59,6 +59,9 @@ public class ExtentReportManager implements ITestListener
 		test.assignCategory(result.getMethod().getGroups());
 		test.log(Status.FAIL,"Test Failed");
 		test.log(Status.FAIL,result.getThrowable().getMessage());
+		
+		String screenshotPath = "path/to/screenshot.png"; // Generate this dynamically
+		test.addScreenCaptureFromPath(screenshotPath);
 	}
 	
 	public void onTestSkipped(ITestResult result)
