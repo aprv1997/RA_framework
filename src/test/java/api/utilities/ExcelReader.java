@@ -1,72 +1,78 @@
 package api.utilities;
 
 import java.io.FileInputStream;
-
-import java.io.FileOutputStream;
 import java.io.IOException;
+
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 
 public class ExcelReader {
 
-	public FileInputStream fi;
-	public FileOutputStream fo;
-	public XSSFWorkbook workbook;
-	public XSSFSheet sheet;
-	public XSSFRow row;
-	public XSSFCell cell;
-	public CellStyle style;
-	String path;
+    private String path;
+    private FileInputStream fi;
+    private XSSFWorkbook workbook;
+    private DataFormatter formatter;
+    private boolean isWorkbookOpen = false;
 
-	public ExcelReader(String path) {
-		this.path = path;
-	}
+    public ExcelReader(String path) {
+        this.path = path;
+        this.formatter = new DataFormatter();
+    }
 
-	public int getRowCount(String sheetName) throws IOException {
-		fi = new FileInputStream(path);
-		workbook = new XSSFWorkbook(fi);
-		sheet = workbook.getSheet(sheetName);
-		int rowcount = sheet.getLastRowNum();
-		workbook.close();
-		fi.close();
-		return rowcount;
-	}
+    // Open workbook once for repeated reads
+    public void openWorkbook() throws IOException {
+        if (!isWorkbookOpen) {
+            fi = new FileInputStream(path);
+            workbook = new XSSFWorkbook(fi);
+            isWorkbookOpen = true;
+        }
+    }
 
-	public int getCellCount(String sheetName, int rownum) throws IOException {
-		fi = new FileInputStream(path);
-		workbook = new XSSFWorkbook(fi);
-		sheet = workbook.getSheet(sheetName);
-		row = sheet.getRow(rownum);
+    // Close workbook and stream
+    public void closeWorkbook() throws IOException {
+        if (isWorkbookOpen) {
+            workbook.close();
+            fi.close();
+            isWorkbookOpen = false;
+        }
+    }
 
-		int cellcount = row.getLastCellNum();
-		workbook.close();
-		fi.close();
-		return cellcount;
+    // Get row count
+    public int getRowCount(String sheetName) throws IOException {
+        try (FileInputStream localFi = new FileInputStream(path);
+             XSSFWorkbook localWorkbook = new XSSFWorkbook(localFi)) {
 
-	}
+            XSSFSheet sheet = localWorkbook.getSheet(sheetName);
+            return (sheet != null) ? sheet.getLastRowNum() : 0;
+        }
+    }
 
-	public String getCellData(String sheetName, int rownum, int colnum) throws IOException {
-		fi = new FileInputStream(path);
-		workbook = new XSSFWorkbook(fi);
-		sheet = workbook.getSheet(sheetName);
-		row=sheet.getRow(rownum);
-		cell=row.getCell(colnum);
-		
-		DataFormatter formatter = new DataFormatter();
-		String data;
-		try {
-			data= formatter.formatCellValue(cell);
-		}
-		catch(Exception e)
-		{
-			data="";
-		}
-		
-		workbook.close();
-		fi.close();
-		return data;
-	}
+    // Get cell count for a row
+    public int getCellCount(String sheetName, int rowNum) throws IOException {
+        try (FileInputStream localFi = new FileInputStream(path);
+             XSSFWorkbook localWorkbook = new XSSFWorkbook(localFi)) {
+
+            XSSFSheet sheet = localWorkbook.getSheet(sheetName);
+            if (sheet == null) return 0;
+
+            XSSFRow row = sheet.getRow(rowNum);
+            return (row != null) ? row.getLastCellNum() : 0;
+        }
+    }
+
+    // Get cell data using cached workbook (use with openWorkbook())
+    public String getCellData(String sheetName, int rowNum, int colNum) throws IOException {
+        if (!isWorkbookOpen) openWorkbook(); // Ensure workbook is open
+
+        XSSFSheet sheet = workbook.getSheet(sheetName);
+        if (sheet == null) return "";
+
+        XSSFRow row = sheet.getRow(rowNum);
+        if (row == null) return "";
+
+        XSSFCell cell = row.getCell(colNum);
+        if (cell == null) return "";
+
+        return formatter.formatCellValue(cell);
+    }
 }
